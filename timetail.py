@@ -3,6 +3,7 @@
 import sys
 import argparse
 import pprint
+import select
 
 
 #
@@ -16,4 +17,18 @@ parser.add_argument('-o', '--oldest', help='Display records oldest first', actio
 parser.add_argument('infile', metavar='FILE', nargs='?', type=argparse.FileType('r'), default=sys.stdin)
 args = parser.parse_args()
 
-pprint.pprint(args.infile.readlines())
+#
+# Input from file
+#
+if 
+
+#
+# input from stdin
+#
+while sys.stdin in select.select([args.infile], [], [], 0)[0]:
+	line = args.infile.readline()
+	if line:
+		print line
+	else:
+		exit()
+
