@@ -1,6 +1,6 @@
 #Timetail
 
-#Description:
+##Description:
 
 Print the last 60 minutes of FILE to standard output. With no FILE read from standard input. 
 
@@ -25,15 +25,7 @@ Print the last 60 minutes of FILE to standard output. With no FILE read from sta
 
 	-o, --oldest          		Display oldest records last (reverse output).
 
-# Install
-
-To Install (as root):
-
-	tar -xzvf timetail.tar.gz
-	cd timetail/rpms
-	yum install -y *.rpm
-
-#Examples of usage:
+##Examples of usage:
 
 Display the last 60 minutes of the /var/log/secure file:
 
