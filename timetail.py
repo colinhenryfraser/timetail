@@ -1,25 +1,24 @@
 #!/usr/bin/python
+###################
+#
+# Name: 	timetail
+# Description: 	Output the contents of a log file based
+#		on the timesptamps of the log entries.
+# Author:	Colin Fraser <colinhenryfraser@me.com>
+# Date:		1st April 2015
+##
 
 import sys
 import argparse
-import pprint
 import select
 import datetime
 import re
-import collections
 
-def get_args():
-	parser = argparse.ArgumentParser()
-	parser.add_argument('-t', '--time', default=3600, help='Time period to display data from log. Append ')
-	parser.add_argument('-i', '--input', metavar='DATE FORMAT', default='%b %d %X', help='Time and date format of the input file')
-	parser.add_argument('-e', '--epoch', help='Display date in UNIX epoch time format', action='store_true')
-	parser.add_argument('-o', '--oldest', help='Display oldest records last (reverse output).', action='store_true')
-	parser.add_argument('infile', metavar='FILE', nargs='?', type=argparse.FileType('r'), default=sys.stdin, help='Read data from FILE. With no FILE, read standard input.')
-	
-	return parser.parse_args()
+#####
+# METHODS
 
 #
-# Test string for int
+# Helper function to test string for int
 def is_int(string):
 	try: 
         	int(sting)
@@ -27,7 +26,8 @@ def is_int(string):
     	except:
         	return False
 
-
+#
+# Convert strings like '1w' (1 week), '1d' (1 day), etc to seconds as an int
 def get_seconds(time_string):
 	#
 	# get the last char of the string to test
@@ -48,8 +48,9 @@ def get_seconds(time_string):
 	else:
 		return int(time_string)
 			
-
-def datefregex(date_format):
+#
+# Covert a date format string like '%Y %B %d %h:%m:s' into a regex
+def date2regex(date_format):
 	regex=''
 	i=0
 	for j in range(0, len(date_format)):
@@ -87,33 +88,23 @@ def datefregex(date_format):
 				regex = regex + '\d[0-6][0-9]'
                         elif date_format[i] == 'S':
 				regex = regex + '\d[0-6][0-9]'
-                        elif date_format[i] == 'f':
-				regex = regex + '\d{6}'
-                        elif date_format[i] == 'z':
-				regex = regex + '(?:\+HHMM|-HHMM)'
-                        elif date_format[i] == 'Z':
-				regex = regex + ''
-                        elif date_format[i] == 'j':
-				regex = regex + '\d[0-3][0-5][0-9]'
-                        elif date_format[i] == 'U':
-				regex = regex + '\d[0-5][0-9]'
-                        elif date_format[i] == 'W':
-				regex = regex + '\d[0-5][0-9]'
-			elif date_format[i] == 'c':
-                                regex = regex + ''
                         elif date_format[i] == 'x':
                                 regex = regex + '\d[0-1][0-9]/\d[0-3][0-9]/\d[0-9][0-9]'
                         elif date_format[i] == 'X':
                                 regex += '\d{2}:\d{2}:\d{2}'
+			elif date_format[i] == '%':
+				regex += '%'
 			i+=1
-			
+		elif re.match("\\\\|\{|\}|\(|\)|\||\[|\]|\^|\*|\$|\.|\?|\+|", date_format[i]):
+			regex += "\\" + date_format[i]
+			i+=1
 		else:	
 			regex += str(date_format[i])
 			i+=1
 	return regex
 
-# process text
 #
+# Receive a log entry and check if is within the range required
 def process_line(line, time_period, input_format, epoch):
 	#
 	# epoch date now
@@ -121,38 +112,39 @@ def process_line(line, time_period, input_format, epoch):
 
 	#
 	# Get the regular expression from the date format entered
-	date_regex = datefregex(input_format)
+	date_regex = date2regex(input_format)
 
 	#
-	# set the date format
-	#
+	# Test the string is within the time period
 	try:
 		#
 		# Find the date in the line
 		match = re.search(date_regex, line.replace("  ", " 0"))
 		#
-		# Add the year if it doesn't exist
+		# Add the year if it doesn't exist - strptime will set it to 1900 if it isn't in the string
 		found_date = match.group() + datetime.datetime.strftime(datetime.datetime.now(), '%Y')
 		line_epoch_date = datetime.datetime.strptime(found_date, input_format+"%Y").strftime('%s')
 		if int(line_epoch_date) >= int(now_epoch_date)-int(time_period):
+			#
+			# It's good so return the string
 			return re.sub(date_regex, line_epoch_date, line.replace("  ", " 0"))
 	except:
-		return 1
+		#
+		# It's not within the time period
+		return None
 
-##########
+######
 # Main
 #
 
 #
 # Set the arguments 
-#
 parser = argparse.ArgumentParser()
 parser.add_argument('-t', '--time', default="3600", help='Time period to display data from log. Append ')
-parser.add_argument('-i', '--input', metavar='DATE FORMAT', default="%b %d %X", help='Time and date format of the input file')
+parser.add_argument('-d', '--date', metavar='DATE FORMAT', default="%b %d %X", help="Time and date format of the input file")
 parser.add_argument('-e', '--epoch', help='Display date in UNIX epoch time format', action='store_true')
 parser.add_argument('-o', '--oldest', help='Display oldest records last (reverse output).', action='store_true')
 parser.add_argument('infile', metavar='FILE', nargs='?', type=argparse.FileType('r'), default=sys.stdin, help='Read data from FILE. With no FILE, read standard input.')
-
 args = parser.parse_args()
 
 #
@@ -173,7 +165,7 @@ if args.infile:
 		while sys.stdin in select.select([args.infile], [], [], 0)[0]:
 			line = args.infile.readline()
 			if line:
-				test_result = process_line(line.rstrip('\n'), get_seconds(args.time), args.input, args.epoch)
+				test_result = process_line(line.rstrip('\n'), get_seconds(args.time), args.date, args.epoch)
 				if test_result != None:
 					output.append(test_result)
 			else:
@@ -183,7 +175,7 @@ if args.infile:
 	# Input from a file
 	#
 		for line in iter(args.infile):
-			test_result = process_line(line.rstrip('\n'), get_seconds(args.time), args.input, args.epoch)
+			test_result = process_line(line.rstrip('\n'), get_seconds(args.time), args.date, args.epoch)
 			if test_result != None:
 				output.append(test_result)
 
@@ -203,5 +195,5 @@ for line in output:
 		#
 		# get the epoch date
 		match = re.search('\d{10}', line)
-		str_date = datetime.datetime.strftime(datetime.datetime.fromtimestamp(float(match.group())), args.input)
+		str_date = datetime.datetime.strftime(datetime.datetime.fromtimestamp(float(match.group())), args.date)
 		print re.sub('\d{10}', str_date.replace(" 0", "  "), line)
