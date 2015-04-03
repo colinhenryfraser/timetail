@@ -4,19 +4,26 @@
 
 Print the last 60 minutes of FILE to standard output. With no FILE read from standard input. 
 
-#Optional Prguments:
+	usage: timetail [-h] [-t TIME] [-d DATE FORMAT] [-e] [-o] [FILE]
+	
+	positional arguments:
+	FILE                  Read data from FILE. With no FILE, read standard
+        	              input.
+	
+	
+	optional arguments:
 
-  -h, --help            		show this help message and exit
+	-h, --help            		show this help message and exit
+	
+	-t TIME, --time TIME  		Time period to display data from log. Append
 
-  -t TIME, --time TIME  	Time period to display data from log. Append
-
-  -d DATE FORMAT, --date DATE FORMAT
-
+	-d DATE FORMAT, --date DATE FORMAT
+	
                         		Time and date format of the input file
 
-  -e, --epoch           		Display date in UNIX epoch time format
+	-e, --epoch           		Display date in UNIX epoch time format
 
-  -o, --oldest          		Display oldest records last (reverse output).
+	-o, --oldest          		Display oldest records last (reverse output).
 
 # Install
 
