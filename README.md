@@ -25,6 +25,12 @@ Print the last 60 minutes of FILE to standard output. With no FILE read from sta
 
 	-o, --oldest          		Display oldest records last (reverse output).
 
+##INSTAL
+	sudo pip install argparse
+	sudo wget -P /usr/local/bin/ https://raw.githubusercontent.com/colinhenryfraser/timetail/master/timetail.py
+	sudo mv /usr/local/bin/timetail.py /usr/local/bin/timetail
+	sudo chmod a+x /usr/local/bin/timetail
+
 ##Examples of usage:
 
 Display the last 60 minutes of the /var/log/secure file:
