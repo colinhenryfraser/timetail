@@ -62,3 +62,4 @@ Read all the /var/log/secure logs from stdin and display the last week in revers
 Read the last 3 hours of the Apache access log from stdin:
 
 	cat /var/log/httpd/access_log | timetail -d "%d/%b/%Y:%H:%M:%S" -t 3h
+
