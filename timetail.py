@@ -49,7 +49,7 @@ def get_seconds(time_string):
 		return int(time_string)
 			
 #
-# Covert a date format string like '%Y %B %d %h:%m:s' into a regex
+# Covert a date format string like '%Y %B %d %H:%M:S' into a regex
 def date2regex(date_format):
 	regex=''
 	i=0
@@ -63,7 +63,7 @@ def date2regex(date_format):
 			elif date_format[i] == 'A':
 				regex = regex + '(?:Sunday|Monday|Tuesday|Wednesday|Thursday|Friday|Saturday)'
 			elif date_format[i] == 'w':
-				regex = regex + '\d[0-6]'
+				regex = regex + '\d{1}'
 			elif date_format[i] == 'D':
 				regex += ' \d{1}|\d{2}'
                         elif date_format[i] == 'd':
@@ -73,29 +73,29 @@ def date2regex(date_format):
                         elif date_format[i] == 'B':
 				regex = regex + '(?:January|Febuary|March|April|May|June|July|August|September|October|November|December)'
                         elif date_format[i] == 'm':
-				regex = regex + '\d[0-3][0-9]'
+				regex = regex + '\d{2}'
                         elif date_format[i] == 'y':
 				regex = regex + '\d{2}'
                         elif date_format[i] == 'Y':
 				regex = regex + '\d{4}'
                         elif date_format[i] == 'H':
-				regex = regex + '\d[0-2][0-9]'
+				regex = regex + '\d{2}'
                         elif date_format[i] == 'I':
-				regex = regex + '\d[0-1][0-9]'
+				regex = regex + '\d{2}'
                         elif date_format[i] == 'p':
 				regex = regex + '(?:PM|AM)'
                         elif date_format[i] == 'M':
-				regex = regex + '\d[0-6][0-9]'
+				regex = regex + '\d{2}'
                         elif date_format[i] == 'S':
-				regex = regex + '\d[0-6][0-9]'
+				regex = regex + '\d{2}'
                         elif date_format[i] == 'x':
-                                regex = regex + '\d[0-1][0-9]/\d[0-3][0-9]/\d[0-9][0-9]'
+                                regex = regex + '\d{2}/\d{2}/\d{2}'
                         elif date_format[i] == 'X':
                                 regex += '\d{2}:\d{2}:\d{2}'
 			elif date_format[i] == '%':
 				regex += '%'
 			i+=1
-		elif re.match("\\\\|\{|\}|\(|\)|\||\[|\]|\^|\*|\$|\.|\?|\+|", date_format[i]):
+		elif "\|{}[]()+*.?$^".find(date_format[i]) >= 0:
 			regex += "\\" + date_format[i]
 			i+=1
 		else:	
@@ -122,8 +122,12 @@ def process_line(line, time_period, input_format, epoch):
 		match = re.search(date_regex, line.replace("  ", " 0"))
 		#
 		# Add the year if it doesn't exist - strptime will set it to 1900 if it isn't in the string
-		found_date = match.group() + datetime.datetime.strftime(datetime.datetime.now(), '%Y')
-		line_epoch_date = datetime.datetime.strptime(found_date, input_format+"%Y").strftime('%s')
+		if input_format.find("%Y") >=0:
+			found_date = match.group()
+			line_epoch_date = datetime.datetime.strptime(found_date, input_format).strftime('%s')
+		else:
+                        found_date = match.group() + datetime.datetime.strftime(datetime.datetime.now(), '%Y')
+                        line_epoch_date = datetime.datetime.strptime(found_date, input_format+"%Y").strftime('%s')
 		if int(line_epoch_date) >= int(now_epoch_date)-int(time_period):
 			#
 			# It's good so return the string
